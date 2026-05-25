@@ -21,7 +21,7 @@
 <body class="min-h-screen flex flex-col justify-between text-slate-800">
 
   <script>
-    const GAS_URL = "https://script.google.com/macros/s/AKfycbw8VR4uRyYbI1yIx_dbWT2jTvZIdCCo2dPZM88JQZmkh4RoExjm_a6ZU7hqUSRtAW_l_g/exec"; // ⚠️ ใส่ URL ของ GAS ที่นี่
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbw8VR4uRyYbI1yIx_dbWT2jTvZIdCCo2dPZM88JQZmkh4RoExjm_a6ZU7hqUSRtAW_l_g/exec"; // ⚠️ ใส่ URL ใหม่ล่าสุดตรงนี้
     
     let CURRENT_DEPT = "";
     let GLOBAL_ADMIN_DATA = [];
@@ -70,7 +70,7 @@
       const r3 = document.getElementById('rank3').value;
       if(!r1 || !r2 || !r3) return true;
       if(r1 === r2 || r1 === r3 || r2 === r3) {
-        alert("⚠️ ห้ามเลือกฝ่ายซ้ำกันในแต่ละลำดับ"); 
+        alert("⚠️ ห้ามเลือกฝ่ายซ้ำกันในแต่ละลำดับ กรุณาเปลี่ยนแผนกให้แตกต่างกันครับ"); 
         return false; 
       }
       return true;
@@ -81,7 +81,7 @@
       if(!validateChoices()) return;
       
       const btn = document.getElementById('reg-submit-btn');
-      btn.innerText = "กำลังบันทึก...";
+      btn.innerText = "กำลังประมวลผล...";
       btn.disabled = true;
 
       const res = await callAPI({
@@ -89,6 +89,8 @@
         name: document.getElementById('fullName').value,
         nickname: document.getElementById('nickName').value,
         studentId: document.getElementById('stdId').value,
+        major: document.getElementById('major').value,
+        year: document.getElementById('year').value,
         lineId: document.getElementById('lineId').value,
         phone: document.getElementById('phone').value,
         rank1: document.getElementById('rank1').value,
@@ -101,14 +103,14 @@
 
       alert(res.message);
       if(res.status === "success") { e.target.reset(); changePage('landing'); }
-      btn.innerText = "ส่งใบสมัคร";
+      btn.innerText = "ส่งใบสมัครเข้าร่วมทีมงาน";
       btn.disabled = false;
     }
 
     async function handleStatusCheck(e) {
       e.preventDefault();
       const output = document.getElementById('status-output');
-      output.innerHTML = "<div class='text-pink-500 animate-pulse mt-4 text-lg'>กำลังค้นหา...</div>";
+      output.innerHTML = "<div class='text-pink-500 animate-pulse mt-4 text-lg'>กำลังค้นหาข้อมูล...</div>";
       const res = await callAPI({ action: "check_status", studentId: document.getElementById('searchId').value });
       output.innerHTML = `<div class="mt-6 p-4 rounded-xl bg-pink-50 border border-pink-200 text-pink-700 text-lg font-medium">${res.msg}</div>`;
     }
@@ -141,9 +143,9 @@
           tbody.innerHTML += `
             <tr class="border-b hover:bg-slate-50 transition">
               <td class="p-4 min-w-[200px]">
-                <p class="font-semibold text-lg">${item.name}</p>
-                <p class="text-slate-500">${item.nickname}</p>
-                <p class="text-sm text-pink-500 mt-1 leading-relaxed">${item.choices}</p>
+                <p class="font-semibold text-lg">${item.name} (${item.nickname})</p>
+                <p class="text-sm font-semibold text-pink-600 bg-pink-100 inline-block px-2 py-0.5 rounded-md mt-1 mb-1">สาขา: ${item.major} ปี ${item.year}</p>
+                <p class="text-sm text-slate-500 leading-relaxed">${item.choices}</p>
               </td>
               <td class="p-4 whitespace-nowrap">
                 <span class="inline-block px-4 py-1 text-sm font-bold rounded-full bg-pink-100 text-pink-600 whitespace-nowrap">${item.rankLabel}</span>
@@ -151,14 +153,14 @@
               <td class="p-4 text-base text-slate-700 bg-orange-50/30 min-w-[250px] leading-relaxed">${item.reason}</td>
               <td class="p-4 align-middle whitespace-nowrap">
                 <div class="flex justify-end space-x-2">
-                  <button onclick="submitDecision(${item.row}, ${item.rankIndex}, 'Accepted')" class="bg-emerald-500 text-white px-4 py-2 rounded-xl font-semibold hover:bg-emerald-600 shadow-md transition">รับเข้าฝ่าย</button>
+                  <button onclick="submitDecision(${item.row}, ${item.rankIndex}, 'Accepted')" class="bg-emerald-500 text-white px-4 py-2 rounded-xl font-semibold hover:bg-emerald-600 shadow-md transition">รับสตาฟ</button>
                   <button onclick="submitDecision(${item.row}, ${item.rankIndex}, 'Rejected')" class="bg-rose-500 text-white px-4 py-2 rounded-xl font-semibold hover:bg-rose-600 shadow-md transition">ไม่รับ</button>
                 </div>
               </td>
             </tr>`;
         });
       } else {
-        tbody.innerHTML = "<tr><td colspan='4' class='p-12 text-center text-slate-400 bg-white rounded-b-2xl text-lg'>ไม่มีผู้สมัครรอการพิจารณาในขณะนี้</td></tr>";
+        tbody.innerHTML = "<tr><td colspan='4' class='p-12 text-center text-slate-400 bg-white rounded-b-2xl text-lg'>🎉 ไม่พบสตาฟที่รอคิวการพิจารณาในขณะนี้</td></tr>";
       }
     }
 
@@ -176,7 +178,7 @@
 
     async function fetchAdminData() {
       const tbody = document.getElementById('admin-table-body');
-      tbody.innerHTML = "<tr><td colspan='6' class='p-8 text-center text-slate-400 text-lg'>รอสักครู่...</td></tr>";
+      tbody.innerHTML = "<tr><td colspan='6' class='p-8 text-center text-slate-400 text-lg'>กำลังเชื่อมต่อฐานข้อมูล...</td></tr>";
       const res = await callAPI({ action: "admin_get_data" });
       
       document.getElementById('adm-total').innerText = res.summary.total;
@@ -203,7 +205,10 @@
             <tr class="border-b bg-white hover:bg-pink-50/50 transition">
               <td class="p-4 text-slate-500 text-sm whitespace-nowrap">${item.timestamp}</td>
               <td class="p-4 font-semibold text-slate-800 whitespace-nowrap">${item.id}</td>
-              <td class="p-4 font-medium min-w-[180px]">${item.name}<br><span class="text-sm text-slate-500">น้อง${item.nickname}</span></td>
+              <td class="p-4 font-medium min-w-[180px]">
+                ${item.name}<br>
+                <span class="text-sm text-slate-500">น้อง${item.nickname} | สาขา ${item.major} ปี ${item.year}</span>
+              </td>
               <td class="p-4 whitespace-nowrap">
                 <div class="font-mono text-emerald-600 font-semibold text-sm">LINE: ${item.lineId}</div>
                 <div class="font-mono text-slate-600 text-sm mt-1">Tel: ${item.phone}</div>
@@ -220,7 +225,7 @@
       const title = document.getElementById('modal-dept-title');
       const list = document.getElementById('modal-dept-list');
       
-      title.innerText = "รายชื่อผู้สมัคร: " + deptName;
+      title.innerText = "รายชื่อสตาฟ: " + deptName;
       list.innerHTML = "";
       
       const filtered = GLOBAL_ADMIN_DATA.filter(item => item.result === deptName);
@@ -232,9 +237,10 @@
             <div class="p-4 border-b hover:bg-slate-50 transition">
               <div class="flex justify-between items-center mb-2">
                 <span class="font-bold text-lg">${can.name} (${can.nickname})</span>
-                <span class="font-semibold text-slate-600 text-sm bg-slate-100 px-2 py-1 rounded">ID: ${can.id}</span>
+                <span class="font-semibold text-pink-600 text-sm bg-pink-100 px-2 py-1 rounded">สาขา: ${can.major} ปี ${can.year}</span>
               </div>
               <div class="flex flex-col sm:flex-row sm:space-x-4 text-sm mt-2">
+                <span class="font-semibold text-slate-600">ID: ${can.id}</span>
                 <span class="text-emerald-600 font-mono font-medium">LINE: ${can.lineId}</span>
                 <span class="text-slate-600 font-mono font-medium">Tel: ${can.phone}</span>
               </div>
@@ -264,11 +270,11 @@
       <div class="space-y-6 text-center md:text-left flex-1">
         <div class="inline-block px-4 py-2 bg-pink-100 text-pink-700 rounded-full font-semibold text-sm mb-2 shadow-sm border border-pink-200">สโมสรนิสิตคณะสหเวชศาสตร์ จุฬาฯ</div>
         <h2 class="text-6xl font-black text-transparent bg-clip-text bg-gradient-to-br from-pink-500 via-rose-500 to-orange-500 leading-tight drop-shadow-sm">STAFF<br>RECRUITMENT</h2>
-        <p class="text-slate-600 text-lg md:text-xl font-medium">ระบบลงทะเบียนรับสมัครสตาฟฝ่าย<br><span class="text-pink-600 font-bold">27 พ.ค. - 2 มิ.ย. 2569</span></p>
+        <p class="text-slate-600 text-lg md:text-xl font-medium">ระบบลงทะเบียนรับสมัครทีมงานรับน้อง<br><span class="text-pink-600 font-bold">27 พ.ค. - 2 มิ.ย. 2569</span></p>
       </div>
       <div class="flex flex-col space-y-5 w-full max-w-sm">
         <button onclick="changePage('register-form')" class="glass-card text-pink-600 py-6 px-6 font-bold text-xl hover:bg-pink-50 transition flex items-center justify-between group">
-          <div class="flex items-center space-x-4"><span class="text-3xl group-hover:scale-110 transition">📝</span><span>สมัครสตาฟฝ่าย</span></div><span class="group-hover:translate-x-2 transition">➔</span>
+          <div class="flex items-center space-x-4"><span class="text-3xl group-hover:scale-110 transition">📝</span><span>สมัครสตาฟ</span></div><span class="group-hover:translate-x-2 transition">➔</span>
         </button>
         <button onclick="changePage('status-check')" class="glass-card text-orange-500 py-6 px-6 font-bold text-xl hover:bg-orange-50 transition flex items-center justify-between group">
           <div class="flex items-center space-x-4"><span class="text-3xl group-hover:scale-110 transition">🔍</span><span>ตรวจสอบสถานะ</span></div><span class="group-hover:translate-x-2 transition">➔</span>
@@ -277,23 +283,46 @@
     </div>
   </main>
 
-  <div id="register-form" class="hidden container mx-auto px-4 py-10 max-w-2xl">
+  <div id="register-form" class="hidden container mx-auto px-4 py-10 max-w-3xl">
     <div class="glass-card p-8">
       <button onclick="changePage('landing')" class="text-slate-400 hover:text-pink-500 font-medium mb-6 flex items-center transition">← ย้อนกลับหน้าแรก</button>
-      <h3 class="text-3xl font-bold text-slate-800 mb-8 border-b-2 border-pink-100 pb-4">กรอกใบสมัคร</h3>
+      <h3 class="text-3xl font-bold text-slate-800 mb-8 border-b-2 border-pink-100 pb-4">กรอกใบสมัครสตาฟ</h3>
       <form onsubmit="handleRegister(event)" class="space-y-6">
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div><label class="text-sm font-bold text-slate-700 ml-1">ชื่อ - นามสกุล <span class="text-red-500">*</span></label><input type="text" id="fullName" required class="input-field"></div>
-          <div><label class="text-sm font-bold text-slate-700 ml-1">ชื่อเล่น <span class="text-red-500">*</span></label><input type="text" id="nickName" required class="input-field"></div>
-        </div>
+        
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div class="md:col-span-1"><label class="text-sm font-bold text-slate-700 ml-1">รหัสนิสิต <span class="text-red-500">*</span></label><input type="text" id="stdId" required class="input-field text-center font-mono"></div>
-          <div class="md:col-span-1"><label class="text-sm font-bold text-slate-700 ml-1">LINE ID <span class="text-red-500">*</span></label><input type="text" id="lineId" required class="input-field"></div>
-          <div class="md:col-span-1"><label class="text-sm font-bold text-slate-700 ml-1">เบอร์ติดต่อ <span class="text-red-500">*</span></label><input type="tel" id="phone" required class="input-field"></div>
+          <div class="md:col-span-2"><label class="text-sm font-bold text-slate-700 ml-1">ชื่อ - นามสกุล <span class="text-red-500">*</span></label><input type="text" id="fullName" required class="input-field"></div>
+          <div class="md:col-span-1"><label class="text-sm font-bold text-slate-700 ml-1">ชื่อเล่น <span class="text-red-500">*</span></label><input type="text" id="nickName" required class="input-field"></div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div><label class="text-sm font-bold text-slate-700 ml-1">รหัสนิสิต <span class="text-red-500">*</span></label><input type="text" id="stdId" required class="input-field text-center font-mono"></div>
+          <div><label class="text-sm font-bold text-slate-700 ml-1">สาขา <span class="text-red-500">*</span></label>
+            <select id="major" required class="input-field">
+              <option value="" disabled selected>เลือกสาขา</option>
+              <option value="MT">MT (เทคนิคการแพทย์)</option>
+              <option value="PT">PT (กายภาพบำบัด)</option>
+              <option value="ND">ND (โภชนาการฯ)</option>
+              <option value="RT">RT (รังสีเทคนิค)</option>
+            </select>
+          </div>
+          <div><label class="text-sm font-bold text-slate-700 ml-1">ชั้นปี <span class="text-red-500">*</span></label>
+            <select id="year" required class="input-field">
+              <option value="" disabled selected>เลือกชั้นปี</option>
+              <option value="1">ปี 1</option>
+              <option value="2">ปี 2</option>
+              <option value="3">ปี 3</option>
+              <option value="4">ปี 4</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pb-4 border-b border-pink-50">
+          <div><label class="text-sm font-bold text-slate-700 ml-1">LINE ID <span class="text-red-500">*</span></label><input type="text" id="lineId" required class="input-field"></div>
+          <div><label class="text-sm font-bold text-slate-700 ml-1">เบอร์ติดต่อ <span class="text-red-500">*</span></label><input type="tel" id="phone" required class="input-field"></div>
         </div>
         
         <div class="bg-pink-50 p-6 rounded-2xl border border-pink-100 space-y-4 shadow-sm">
-          <div><label class="text-base font-bold text-pink-600 ml-1">อันดับที่ 1 <span class="text-red-500">*</span></label><select id="rank1" required onchange="validateChoices()" class="input-field font-medium text-pink-700"></select></div>
+          <div><label class="text-base font-bold text-pink-600 ml-1">อันดับที่ 1 (อยากทำที่สุด) <span class="text-red-500">*</span></label><select id="rank1" required onchange="validateChoices()" class="input-field font-medium text-pink-700"></select></div>
           <div><label class="text-sm font-bold text-slate-600 ml-1">เหตุผลประกอบ <span class="text-red-500">*</span></label><textarea id="reason1" required class="input-field" rows="2"></textarea></div>
         </div>
         <div class="bg-orange-50 p-6 rounded-2xl border border-orange-100 space-y-4 shadow-sm">
@@ -304,7 +333,7 @@
           <div><label class="text-base font-bold text-amber-600 ml-1">อันดับที่ 3 <span class="text-red-500">*</span></label><select id="rank3" required onchange="validateChoices()" class="input-field font-medium text-amber-700"></select></div>
           <div><label class="text-sm font-bold text-slate-600 ml-1">เหตุผลประกอบ <span class="text-red-500">*</span></label><textarea id="reason3" required class="input-field" rows="2"></textarea></div>
         </div>
-        <button type="submit" id="reg-submit-btn" class="w-full btn-primary text-xl py-4 mt-4 shadow-lg">ส่งใบสมัคร</button>
+        <button type="submit" id="reg-submit-btn" class="w-full btn-primary text-xl py-4 mt-4 shadow-lg">ส่งใบสมัครเข้าร่วมทีมงาน</button>
       </form>
     </div>
   </div>
@@ -312,7 +341,7 @@
   <div id="status-check" class="hidden container mx-auto px-4 py-12 max-w-lg">
     <div class="glass-card p-10 text-center">
       <button onclick="changePage('landing')" class="text-slate-400 hover:text-orange-500 font-medium mb-6 flex items-center transition">← ย้อนกลับ</button>
-      <h3 class="text-2xl font-bold text-slate-800 mb-6">ตรวจสอบสถานะ</h3>
+      <h3 class="text-2xl font-bold text-slate-800 mb-6">ตรวจสอบสถานะสตาฟ</h3>
       <form onsubmit="handleStatusCheck(event)" class="space-y-4">
         <input type="text" id="searchId" required placeholder="กรอกรหัสนิสิต 10 หลัก" class="input-field text-center text-xl font-semibold py-4 shadow-inner">
         <button type="submit" class="w-full btn-primary bg-gradient-to-r from-orange-400 to-amber-500 text-lg py-3 shadow-lg">ค้นหาข้อมูล</button>
@@ -324,11 +353,11 @@
   <div id="head-login" class="hidden container mx-auto px-4 py-12 max-w-md">
     <div class="glass-card p-8">
       <button onclick="changePage('landing')" class="text-slate-400 hover:text-pink-500 font-medium mb-6 flex items-center transition">← ย้อนกลับ</button>
-      <h3 class="text-2xl font-bold text-slate-800 text-center mb-6">Head Login</h3>
+      <h3 class="text-2xl font-bold text-slate-800 text-center mb-6">👑 เข้าสู่ระบบ Head ฝ่าย</h3>
       <form onsubmit="handleHeadLogin(event)" class="space-y-5">
-        <div><label class="text-sm font-bold text-slate-600 ml-1">username</label><input type="text" id="headUser" required class="input-field text-lg text-center font-mono"></div>
-        <div><label class="text-sm font-bold text-slate-600 ml-1">password</label><input type="password" id="headPass" required class="input-field text-lg text-center tracking-widest"></div>
-        <button type="submit" class="w-full btn-primary bg-gradient-to-r from-slate-700 to-slate-900 py-3 mt-4 text-lg shadow-lg">เข้าสู่ระบบ</button>
+        <div><label class="text-sm font-bold text-slate-600 ml-1">รหัสประจำตำแหน่ง (001-022)</label><input type="text" id="headUser" required class="input-field text-lg text-center font-mono"></div>
+        <div><label class="text-sm font-bold text-slate-600 ml-1">รหัสผ่าน</label><input type="password" id="headPass" required class="input-field text-lg text-center tracking-widest"></div>
+        <button type="submit" class="w-full btn-primary bg-gradient-to-r from-slate-700 to-slate-900 py-3 mt-4 text-lg shadow-lg">เข้าสู่กระดานพิจารณา</button>
       </form>
     </div>
   </div>
@@ -338,15 +367,15 @@
       <div class="flex flex-col md:flex-row justify-between items-start md:items-center border-b-2 border-pink-100 pb-6 mb-8 gap-4">
         <div>
           <h2 class="text-3xl font-black text-pink-600" id="head-dept-title">ฝ่ายงานสโมสร</h2>
-          <p class="text-base text-slate-500 mt-1">ระบบคัดเลือกสตาฟฝ่าย</p>
+          <p class="text-base text-slate-500 mt-1">กระดานพิจารณาสตาฟ (คัดแยกตามสิทธิ์ขั้นบันได)</p>
         </div>
         <button onclick="CURRENT_DEPT=''; changePage('landing')" class="text-sm font-bold text-rose-500 bg-rose-50 px-4 py-2 rounded-full hover:bg-rose-100 transition border border-rose-200 shadow-sm whitespace-nowrap">ออกจากระบบ</button>
       </div>
 
       <div class="grid grid-cols-2 md:grid-cols-6 gap-4 mb-8">
-        <div class="bg-slate-50 p-4 rounded-2xl text-center border shadow-sm"><p class="text-xs text-slate-500 font-bold mb-1">คนสมัครรวม</p><p id="stat-campTotal" class="text-2xl font-black text-slate-700">0</p></div>
-        <div class="bg-rose-50 p-4 rounded-2xl text-center border border-rose-100 shadow-sm"><p class="text-xs text-rose-500 font-bold mb-1">สตาฟที่ไม่ผ่าน</p><p id="stat-campRej" class="text-2xl font-black text-rose-600">0</p></div>
-        <div class="bg-pink-100 p-4 rounded-2xl text-center border border-pink-200 shadow-sm"><p class="text-xs text-pink-600 font-bold mb-1">สมัครฝ่ายนี้ทั้งหมด</p><p id="stat-deptTotal" class="text-2xl font-black text-pink-700">0</p></div>
+        <div class="bg-slate-50 p-4 rounded-2xl text-center border shadow-sm"><p class="text-xs text-slate-500 font-bold mb-1">คนสมัครรวมทั้งค่าย</p><p id="stat-campTotal" class="text-2xl font-black text-slate-700">0</p></div>
+        <div class="bg-rose-50 p-4 rounded-2xl text-center border border-rose-100 shadow-sm"><p class="text-xs text-rose-500 font-bold mb-1">สตาฟที่ไม่ผ่านค่ายนี้</p><p id="stat-campRej" class="text-2xl font-black text-rose-600">0</p></div>
+        <div class="bg-pink-100 p-4 rounded-2xl text-center border border-pink-200 shadow-sm"><p class="text-xs text-pink-600 font-bold mb-1">เลือกฝ่ายเรา (รวม)</p><p id="stat-deptTotal" class="text-2xl font-black text-pink-700">0</p></div>
         <div class="bg-white p-4 rounded-2xl text-center border shadow-sm"><p class="text-xs text-amber-500 font-bold mb-1">รอพิจารณาอันดับ 1</p><p id="stat-r1" class="text-2xl font-black text-amber-600">0</p></div>
         <div class="bg-white p-4 rounded-2xl text-center border shadow-sm"><p class="text-xs text-orange-500 font-bold mb-1">รอพิจารณาอันดับ 2</p><p id="stat-r2" class="text-2xl font-black text-orange-600">0</p></div>
         <div class="bg-white p-4 rounded-2xl text-center border shadow-sm"><p class="text-xs text-purple-500 font-bold mb-1">รอพิจารณาอันดับ 3</p><p id="stat-r3" class="text-2xl font-black text-purple-600">0</p></div>
@@ -356,9 +385,9 @@
         <table class="w-full text-left border-collapse bg-white">
           <thead class="sticky top-0 z-10 bg-slate-50 shadow-sm">
             <tr class="text-sm font-bold text-slate-500 border-b">
-              <th class="p-4 whitespace-nowrap">ผู้สมัคร</th>
+              <th class="p-4 whitespace-nowrap">ข้อมูลนิสิต</th>
               <th class="p-4 whitespace-nowrap">อันดับ</th>
-              <th class="p-4 whitespace-nowrap">เหตุผล</th>
+              <th class="p-4 whitespace-nowrap">เหตุผลประกอบการขอร่วมฝ่าย</th>
               <th class="p-4 text-right whitespace-nowrap">การจัดการ</th>
             </tr>
           </thead>
@@ -376,7 +405,7 @@
       <form onsubmit="handleAdminLogin(event)" class="space-y-5">
         <div><label class="text-sm font-bold text-slate-600 ml-1">Username</label><input type="text" id="adminUser" required class="input-field text-lg text-center font-mono"></div>
         <div><label class="text-sm font-bold text-slate-600 ml-1">Password</label><input type="password" id="adminPass" required class="input-field text-lg text-center tracking-widest"></div>
-        <button type="submit" class="w-full btn-primary bg-gradient-to-r from-pink-600 to-rose-600 py-3 mt-4 text-lg shadow-lg">เข้าสู่ระบบ</button>
+        <button type="submit" class="w-full btn-primary bg-gradient-to-r from-pink-600 to-rose-600 py-3 mt-4 text-lg shadow-lg">เข้าสู่ระบบจัดการภาพรวม</button>
       </form>
     </div>
   </div>
@@ -384,7 +413,7 @@
   <div id="admin-panel" class="hidden container mx-auto px-4 py-8 max-w-7xl">
     <div class="glass-card p-6 md:p-8">
       <div class="flex flex-col md:flex-row justify-between items-start md:items-center border-b-2 border-pink-100 pb-6 mb-8 gap-4">
-        <div><h2 class="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-pink-600 to-orange-500">Admin Centre</h2><p class="text-base text-slate-500 mt-1">ระบบประมวลภาพรวม</p></div>
+        <div><h2 class="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-pink-600 to-orange-500">Master Command Centre</h2><p class="text-base text-slate-500 mt-1">ระบบประมวลภาพรวมทั้ง 22 ฝ่าย</p></div>
         <button onclick="changePage('landing')" class="text-sm font-bold text-slate-500 bg-slate-100 px-4 py-2 rounded-full hover:bg-slate-200 transition border shadow-sm whitespace-nowrap">ออกจากระบบ</button>
       </div>
 
@@ -395,19 +424,19 @@
         <div class="bg-gradient-to-br from-rose-500 to-pink-600 text-white p-6 rounded-2xl text-center shadow-md"><p class="text-sm font-semibold opacity-90 mb-1">ไม่ผ่านคัดเลือก</p><p id="adm-rej" class="text-4xl font-black">0</p></div>
       </div>
 
-      <h4 class="font-bold text-slate-700 text-lg mb-4 flex items-center">📊 จำนวนสตาฟฝ่าย <span class="text-sm font-normal text-slate-400 ml-2">(คลิกที่การ์ดเพื่อดูรายชื่อ)</span></h4>
+      <h4 class="font-bold text-slate-700 text-lg mb-4 flex items-center">📊 จำนวนสตาฟรายฝ่าย <span class="text-sm font-normal text-slate-400 ml-2">(คลิกที่การ์ดเพื่อดูรายชื่อ)</span></h4>
       <div id="admin-summary-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 mb-10"></div>
 
-      <h4 class="font-bold text-slate-700 text-lg mb-4">📋 ฐานข้อมูลผู้สมัคร</h4>
+      <h4 class="font-bold text-slate-700 text-lg mb-4">📋 ฐานข้อมูลผู้สมัครทั้งหมด</h4>
       <div class="overflow-x-auto rounded-2xl border border-slate-200 shadow-sm max-h-[500px]">
         <table class="w-full text-left border-collapse bg-white">
           <thead class="sticky top-0 z-10 bg-slate-50 shadow-sm">
             <tr class="text-sm font-bold text-slate-500 border-b">
               <th class="p-4 whitespace-nowrap">เวลาลงทะเบียน</th>
               <th class="p-4 whitespace-nowrap">รหัสนิสิต</th>
-              <th class="p-4 whitespace-nowrap">รายชื่อ</th>
+              <th class="p-4 whitespace-nowrap">ชื่อสตาฟ</th>
               <th class="p-4 whitespace-nowrap">ข้อมูลติดต่อ</th>
-              <th class="p-4 whitespace-nowrap">ตำแหน่ง</th>
+              <th class="p-4 whitespace-nowrap">การเลือก 1-3</th>
               <th class="p-4 text-right whitespace-nowrap">สถานะภาพรวม</th>
             </tr>
           </thead>
@@ -420,7 +449,7 @@
   <div id="dept-modal" class="hidden fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
     <div class="bg-white rounded-3xl w-full max-w-2xl max-h-[80vh] flex flex-col shadow-2xl border border-pink-100 animate-fade-in">
       <div class="p-6 border-b flex justify-between items-center bg-pink-50/50 rounded-t-3xl">
-        <h3 id="modal-dept-title" class="text-2xl font-bold text-pink-600">รายชื่อผู้สมัคร: </h3>
+        <h3 id="modal-dept-title" class="text-2xl font-bold text-pink-600">รายชื่อสตาฟ: </h3>
         <button onclick="closeDeptModal()" class="text-slate-400 hover:text-rose-500 text-3xl leading-none transition">&times;</button>
       </div>
       <div class="p-6 overflow-y-auto flex-1 bg-slate-50/50">
